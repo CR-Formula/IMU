@@ -5,3 +5,11 @@
 * 
 * @brief   Header file for UART driver
 ***********************************************/
+
+#include "stm32f042x6.h"
+
+/**
+ * @brief Initilize UART
+ * 
+ */
+void uart_init();
