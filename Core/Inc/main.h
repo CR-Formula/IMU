@@ -17,6 +17,7 @@ extern "C" {
 #include "stm32f0xx_hal.h"
 #include "can.h"
 #include "sysclk.h"
+#include "gpio.h"
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
