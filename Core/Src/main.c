@@ -10,20 +10,19 @@
 #include "main.h"
 
 /* Global Variables ---------------------------------------------------------*/
-GPIO_Instance TogglePin;
+GPIO_Instance TogglePin = 
+{
+    .port = GPIOA,
+    .pin = 0,
+    .mode = GPIO_Mode_Output,
+    .pull = GPIO_Pull_NoPull,
+    .speed = GPIO_Speed_Low
+};
 
 /* Function Calls -----------------------------------------------------------*/
 void main() {
     // Initialize the system clock to 48MHz
     Sysclock_48();
-
-    TogglePin = (GPIO_Instance) {
-        .port = GPIOA,
-        .pin = GPIO_PIN_5,
-        .mode = GPIO_Mode_Output,
-        .pull = GPIO_Pull_NoPull,
-        .speed = GPIO_Speed_Low
-    };
     
     GPIO_Init(&TogglePin);
 
