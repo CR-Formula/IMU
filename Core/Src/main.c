@@ -28,5 +28,6 @@ void main() {
 
     while (1) {
         // Main loop
+        GPIO_Set(TogglePin.port, TogglePin.pin); // Set pin high
     }
 }
