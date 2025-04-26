@@ -18,7 +18,7 @@
   */
 /* USER CODE END Header */
 
-/* Define to prevent recursive inclusion -------------------------------------*/
+/* Define to prevent recursive inclusion ------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
 
@@ -26,41 +26,20 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes -----------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
+#include "can.h"
+#include "sysclk.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* Macro Defines ------------------------------------------------------------*/
+#define ACCEL_MESSAGE_ID                      (0x100)
 
-/* USER CODE END Includes */
+/* Global Variables ---------------------------------------------------------*/
 
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
 
-/* USER CODE END ET */
-
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
-
-/* USER CODE END EC */
-
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
-
-/* USER CODE END EM */
-
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes --------------------------------------------*/
 void Error_Handler(void);
 
-/* USER CODE BEGIN EFP */
-
-/* USER CODE END EFP */
-
-/* Private defines -----------------------------------------------------------*/
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
