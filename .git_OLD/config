@@ -1,0 +1,25 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[submodule]
+	active = .
+[remote "origin"]
+	url = https://github.com/CR-Formula/IMU.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+[submodule "Drivers/STM32F04-Drivers"]
+	url = https://github.com/CR-Formula/STM32F04-Drivers.git
+[branch "5-setup-can-transmit"]
+	remote = origin
+	merge = refs/heads/5-setup-can-transmit
+	vscode-merge-base = origin/5-setup-can-transmit
+[branch "test-i2c-read"]
+	vscode-merge-base = origin/5-setup-can-transmit
+[user]
+	name = Aaron Birky
+	email = abirky@iastate.edu

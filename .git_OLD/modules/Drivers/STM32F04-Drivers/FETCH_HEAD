@@ -1,0 +1,4 @@
+e68179623c5cef1f57b648047def197813be1fec	not-for-merge	branch '3-setup-usb-connection' of https://github.com/CR-Formula/STM32F04-Drivers
+a80bceb14917af97810deabbee2c3de839bc1455	not-for-merge	branch 'gpio-driver' of https://github.com/CR-Formula/STM32F04-Drivers
+7f5a1c682a119a400327d0787819b5a40f2e2257	not-for-merge	branch 'main' of https://github.com/CR-Formula/STM32F04-Drivers
+70b2216274f9909b7b50bc44be1ed6e4a7d8133b	not-for-merge	branch 'spi-driver' of https://github.com/CR-Formula/STM32F04-Drivers
