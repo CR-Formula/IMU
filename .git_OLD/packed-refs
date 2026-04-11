@@ -1,5 +1,0 @@
-# pack-refs with: peeled fully-peeled sorted 
-46dae2d2f50decefc1479126efc6e3ee8988d31c refs/remotes/origin/5-setup-can-transmit
-b82a7e6f39cfd263c465ac023cb9128ce7fef643 refs/remotes/origin/blinky-test-code
-33a4cb7854164d3ae8c8633a4fedaccaf226adeb refs/remotes/origin/main
-8aad25aea404d5e1240ce5d7fddfaccbb48783c5 refs/remotes/origin/uart-driver

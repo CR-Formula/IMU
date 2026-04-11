@@ -1,5 +1,0 @@
-# pack-refs with: peeled fully-peeled sorted 
-e68179623c5cef1f57b648047def197813be1fec refs/remotes/origin/3-setup-usb-connection
-a80bceb14917af97810deabbee2c3de839bc1455 refs/remotes/origin/gpio-driver
-7f5a1c682a119a400327d0787819b5a40f2e2257 refs/remotes/origin/main
-70b2216274f9909b7b50bc44be1ed6e4a7d8133b refs/remotes/origin/spi-driver

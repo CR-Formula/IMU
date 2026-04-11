@@ -1,5 +1,0 @@
-0000000000000000000000000000000000000000 33a4cb7854164d3ae8c8633a4fedaccaf226adeb awigg <awigg@WiggleTop.localdomain> 1775323790 -0500	clone: from https://github.com/CR-Formula/IMU.git
-33a4cb7854164d3ae8c8633a4fedaccaf226adeb 46dae2d2f50decefc1479126efc6e3ee8988d31c awigg <awigg@WiggleTop.localdomain> 1775323811 -0500	checkout: moving from main to 5-setup-can-transmit
-46dae2d2f50decefc1479126efc6e3ee8988d31c 46dae2d2f50decefc1479126efc6e3ee8988d31c awigg <awigg@WiggleTop.localdomain> 1775511542 -0500	checkout: moving from 5-setup-can-transmit to test-i2c-read
-46dae2d2f50decefc1479126efc6e3ee8988d31c 5cb8292c7b9cb7e6789559fc7a7e5c9f41a10ac3 Aaron Birky <abirky@iastate.edu> 1775511607 -0500	commit: Initial commit; won't compile even with commented out logic
-5cb8292c7b9cb7e6789559fc7a7e5c9f41a10ac3 46dae2d2f50decefc1479126efc6e3ee8988d31c Aaron Birky <abirky@iastate.edu> 1775511615 -0500	checkout: moving from test-i2c-read to 5-setup-can-transmit
