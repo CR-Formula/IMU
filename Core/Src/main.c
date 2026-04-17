@@ -63,6 +63,16 @@ CAN_TxHeaderTypeDef GyroHeader = {
 };
 uint8_t GyroData[6] = {0};
 
+CAN_TxHeaderTypeDef GyroRateHeader = {
+    .StdId = GYRO_RATE_MESSAGE_ID,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = 6
+};
+uint8_t GyroRateData[6] = {0};
+
+
+
 uint32_t Mailbox;
 /* USER CODE END PV */
 
@@ -87,36 +97,7 @@ static void MX_I2C1_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  // // Enable GPIOF clock
-  // RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-  // RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 
-  // // PF0 and PF1 as general-purpose outputs (MODER = 01)
-  // GPIOA->MODER &= ~(3U << (10 * 2)); // clear mode bits
-  // GPIOA->MODER |=  (1U << (10 * 2)); // set to output
-  // GPIOB->MODER &= ~(3U << (8 * 2)); // clear mode bits
-  // GPIOB->MODER |=  (1U << (8 * 2)); // set to output
-
-  // // Push-pull outputs (OTYPER = 0)
-  // GPIOA->OTYPER &= ~(1U << 10);
-  // GPIOB->OTYPER &= ~(1U << 8);
-
-  // // No pull-up/pull-down
-  // GPIOA->PUPDR &= ~(3U << (10 * 2));
-  // GPIOB->PUPDR &= ~(3U << (8 * 2));
-
-  // while (1)
-  // {
-  //   // Drive both pins LOW
-  //   GPIOA->ODR &= ~(1U << 10);
-  //   GPIOB->ODR &= ~(1U << 8);
-  //   for (volatile int i = 0; i < 1200; i++);
-
-  //   // Drive both pins HIGH
-  //   GPIOA->ODR |=  (1U << 10);
-  //   GPIOB->ODR |=  (1U << 8);
-  //   for (volatile int i = 0; i < 1200; i++);
-  // }
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -147,10 +128,16 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN 3 */
   
+  // Wait for IMU to boot
+  HAL_Delay(1000);
+
   // Check if device is ready
   while (1){
     status = HAL_I2C_IsDeviceReady(&hi2c1, BNO055_ADDR, 10, I2C_TIMEOUT_MS);
     if (status == HAL_OK) break;
+
+    HAL_I2C_DeInit(&hi2c1);
+    MX_I2C1_Init();
   }
 
   // Set to IMU Mode
@@ -158,38 +145,58 @@ int main(void)
   while (1) {
     status = HAL_I2C_Mem_Write(&hi2c1, BNO055_ADDR, OPR_MODE, 1, &imuMode, 1, I2C_TIMEOUT_MS);
     if (status == HAL_OK) break;
+
+    HAL_I2C_DeInit(&hi2c1);
+    MX_I2C1_Init();
   }
 
   // Main Loop - read values
   while (1) {
     status = HAL_OK; // Reset status before reading data
 
-    // Read IMU data (store as big-endian)
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_X_LSB, 1, &AccelData[1], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_X_MSB, 1, &AccelData[0], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_Y_LSB, 1, &AccelData[3], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_Y_MSB, 1, &AccelData[2], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_Z_LSB, 1, &AccelData[5], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, ACC_DATA_Z_MSB, 1, &AccelData[4], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB, 1, &GyroData[1], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_MSB, 1, &GyroData[0], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_LSB, 1, &GyroData[3], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_MSB, 1, &GyroData[2], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_LSB, 1, &GyroData[5], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_MSB, 1, &GyroData[4], 1, I2C_TIMEOUT_MS);
+    // Read IMU data (store as BIG-ENDIAN)
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_LSB, 1, &AccelData[1], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_MSB, 1, &AccelData[0], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Y_LSB, 1, &AccelData[3], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Y_MSB, 1, &AccelData[2], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Z_LSB, 1, &AccelData[5], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Z_MSB, 1, &AccelData[4], 1, I2C_TIMEOUT_MS);
+
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_LSB, 1, &GyroData[5], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_MSB, 1, &GyroData[4], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Roll_LSB, 1,    &GyroData[1], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Roll_MSB, 1,    &GyroData[0], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Pitch_LSB, 1,   &GyroData[3], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Pitch_MSB, 1,   &GyroData[2], 1, I2C_TIMEOUT_MS);
+
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB, 1, &GyroRateData[1], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_MSB, 1, &GyroRateData[0], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_LSB, 1, &GyroRateData[3], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_MSB, 1, &GyroRateData[2], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_LSB, 1, &GyroRateData[5], 1, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_MSB, 1, &GyroRateData[4], 1, I2C_TIMEOUT_MS);
+
+    // Attempt to recover from I2C errors by reinitializing the I2C peripheral
     if (status != HAL_OK) {
+      HAL_I2C_DeInit(&hi2c1);
+      HAL_Delay(1000); // Wait before reinitializing
+      MX_I2C1_Init();
       continue;
     }
 
-    // Transmit CAN messages
+    // Drop messages if CAN bus is congested
     uint32_t freeBoxes = HAL_CAN_GetTxMailboxesFreeLevel(&hcan);
     if (freeBoxes == 0) {
       HAL_CAN_AbortTxRequest(&hcan, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2); // Abort any pending transmissions to free up mailboxes
-      // continue; // No free mailboxes, skip this iteration
     }
 
+    // Transmit Can messages
     HAL_CAN_AddTxMessage(&hcan, &AccelHeader, AccelData, &Mailbox);
     HAL_CAN_AddTxMessage(&hcan, &GyroHeader, GyroData, &Mailbox);
+    HAL_CAN_AddTxMessage(&hcan, &GyroRateHeader, GyroRateData, &Mailbox);
+
+    // Delay to maintain consistent update rate
+    HAL_Delay(UPDATE_RATE_MS - (HAL_GetTick() % UPDATE_RATE_MS));
   }
   /* USER CODE END 3 */
 }

@@ -60,10 +60,12 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 #define I2C_TIMEOUT_MS                        (100) // Timeout for I2C in ms
+#define UPDATE_RATE_MS                        (20)  // Desired update rate in ms (50 Hz)
 #define BNO055_ADDR                           (0x28 << 1) // I2C address of the BNO055 IMU, left shifted for HAL functions
 
 #define ACCEL_MESSAGE_ID                      (0x100)
 #define GYRO_MESSAGE_ID                       (0x101)
+#define GYRO_RATE_MESSAGE_ID                  (0x102)
 
 #define ACC_DATA_X_LSB                        (0x08)
 #define ACC_DATA_X_MSB                        (0x09)
@@ -79,12 +81,33 @@ void Error_Handler(void);
 #define GYR_DATA_Z_LSB                        (0x18)
 #define GYR_DATA_Z_MSB                        (0x19)
 
+#define EUL_Heading_LSB                       (0x1A)
+#define EUL_Heading_MSB                       (0x1B)
+#define EUL_Roll_LSB                          (0x1C)
+#define EUL_Roll_MSB                          (0x1D)
+#define EUL_Pitch_LSB                         (0x1E)
+#define EUL_Pitch_MSB                         (0x1F)
+
 #define LIA_DATA_X_LSB                        (0x28)
 #define LIA_DATA_X_MSB                        (0x29)
 #define LIA_DATA_Y_LSB                        (0x2A)
 #define LIA_DATA_Y_MSB                        (0x2B)
 #define LIA_DATA_Z_LSB                        (0x2C)
 #define LIA_DATA_Z_MSB                        (0x2D)
+
+#define ACC_OFFSET_X_LSB                      (0x55)
+#define ACC_OFFSET_X_MSB                      (0x56)
+#define ACC_OFFSET_Y_LSB                      (0x57)
+#define ACC_OFFSET_Y_MSB                      (0x58)
+#define ACC_OFFSET_Z_LSB                      (0x59)
+#define ACC_OFFSET_Z_MSB                      (0x5A)
+
+#define GYR_OFFSET_X_LSB                      (0x61)
+#define GYR_OFFSET_X_MSB                      (0x62)
+#define GYR_OFFSET_Y_LSB                      (0x63)
+#define GYR_OFFSET_Y_MSB                      (0x64)
+#define GYR_OFFSET_Z_LSB                      (0x65)
+#define GYR_OFFSET_Z_MSB                      (0x66)
 
 #define CALIB_STAT                            (0x35)
 #define OPR_MODE                              (0x3D)
