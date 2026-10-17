@@ -53,15 +53,15 @@ CAN_TxHeaderTypeDef AccelHeader = {
     .RTR = CAN_RTR_DATA,
     .DLC = 6
 };
-int16_t AccelData[3] = {0};
+// int16_t AccelData[3] = {0};
 
-CAN_TxHeaderTypeDef GyroHeader = {
-    .StdId = GYRO_MESSAGE_ID,
-    .IDE = CAN_ID_STD,
-    .RTR = CAN_RTR_DATA,
-    .DLC = 6
-};
-int16_t GyroData[3] = {0};
+// CAN_TxHeaderTypeDef GyroHeader = {
+//     .StdId = GYRO_MESSAGE_ID,
+//     .IDE = CAN_ID_STD,
+//     .RTR = CAN_RTR_DATA,
+//     .DLC = 6
+// };
+// int16_t GyroData[3] = {0};
 
 CAN_TxHeaderTypeDef GyroRateHeader = {
     .StdId = GYRO_RATE_MESSAGE_ID,
@@ -69,7 +69,19 @@ CAN_TxHeaderTypeDef GyroRateHeader = {
     .RTR = CAN_RTR_DATA,
     .DLC = 6
 };
-int16_t GyroRateData[3] = {0};
+// int16_t GyroRateData[3] = {0};
+
+CAN_TxHeaderTypeDef QuaternionHeader = {
+    .StdId = QUATERNION_MESSAGE_ID,
+    .IDE = CAN_ID_STD,
+    .RTR = CAN_RTR_DATA,
+    .DLC = 8
+};
+
+// int16_t QuaternionData[4] = {0};
+
+int16_t ImuData[3][26] = {0};
+int16_t ProcessedData[26] = {0};
 
 uint32_t Mailbox;
 /* USER CODE END PV */
@@ -154,17 +166,28 @@ int main(void)
   while (1) {
     status = HAL_OK; // Reset status before reading data
 
-    // Read IMU data (little endian)
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_LSB,  I2C_MEMADD_SIZE_8BIT, (uint8_t*)AccelData,    6, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)GyroData,     6, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB,  I2C_MEMADD_SIZE_8BIT, (uint8_t*)GyroRateData, 6, I2C_TIMEOUT_MS);
+    // Get 3 reads and compare
+    for (int i = 0; i < 3; i++) {
+      status = HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB,  I2C_MEMADD_SIZE_8BIT, ImuData[i], 26, I2C_TIMEOUT_MS);
+    
+      // Attempt to recover from I2C errors by reinitializing the I2C peripheral
+      if (status != HAL_OK) {
+        HAL_I2C_DeInit(&hi2c1);
+        HAL_Delay(1000); // Wait before reinitializing
+        MX_I2C1_Init();
+        continue;
+      }
+    }
 
-    // Attempt to recover from I2C errors by reinitializing the I2C peripheral
-    if (status != HAL_OK) {
-      HAL_I2C_DeInit(&hi2c1);
-      HAL_Delay(1000); // Wait before reinitializing
-      MX_I2C1_Init();
-      continue;
+    // Compare the three readings and take the median value
+    for (int i = 0; i < 26; i++) {
+      if ((ImuData[0][i] <= ImuData[1][i] && ImuData[0][i] >= ImuData[2][i]) || (ImuData[0][i] >= ImuData[1][i] && ImuData[0][i] <= ImuData[2][i])) {
+        ProcessedData[i] = ImuData[0][i];
+      } else if ((ImuData[1][i] <= ImuData[0][i] && ImuData[1][i] >= ImuData[2][i]) || (ImuData[1][i] >= ImuData[0][i] && ImuData[1][i] <= ImuData[2][i])) {
+        ProcessedData[i] = ImuData[1][i];
+      } else {
+        ProcessedData[i] = ImuData[2][i];
+      }
     }
 
     // Drop messages if CAN bus is congested
@@ -174,9 +197,9 @@ int main(void)
     }
 
     // Transmit CAN messages
-    HAL_CAN_AddTxMessage(&hcan, &AccelHeader, AccelData, &Mailbox);
-    HAL_CAN_AddTxMessage(&hcan, &GyroHeader, GyroData, &Mailbox);
-    HAL_CAN_AddTxMessage(&hcan, &GyroRateHeader, GyroRateData, &Mailbox);
+    HAL_CAN_AddTxMessage(&hcan, &GyroRateHeader, &ProcessedData[0], &Mailbox);
+    HAL_CAN_AddTxMessage(&hcan, &QuaternionHeader, &ProcessedData[6], &Mailbox);
+    HAL_CAN_AddTxMessage(&hcan, &AccelHeader, &ProcessedData[10], &Mailbox);
 
     // Delay to maintain consistent update rate
     HAL_Delay(UPDATE_RATE_MS - (HAL_GetTick() % UPDATE_RATE_MS));
@@ -197,8 +220,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI48;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -210,11 +234,11 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI48;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -242,15 +266,15 @@ static void MX_CAN_Init(void)
 
   /* USER CODE END CAN_Init 1 */
   hcan.Instance = CAN;
-  hcan.Init.Prescaler = 1;
+  hcan.Init.Prescaler = 6;
   hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_4TQ; // was CAN_SJW_1TQ
+  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan.Init.TimeSeg1 = CAN_BS1_10TQ;
   hcan.Init.TimeSeg2 = CAN_BS2_5TQ;
   hcan.Init.TimeTriggeredMode = DISABLE;
   hcan.Init.AutoBusOff = DISABLE;
   hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = ENABLE; // was DISABLE
+  hcan.Init.AutoRetransmission = DISABLE;
   hcan.Init.ReceiveFifoLocked = DISABLE;
   hcan.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan) != HAL_OK)
@@ -279,7 +303,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x10420F13; //was 0x0010020A; // 
+  hi2c1.Init.Timing = 0x00201D2B;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -306,7 +330,7 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
-  
+
   /* USER CODE END I2C1_Init 2 */
 
 }

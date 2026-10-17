@@ -66,6 +66,7 @@ void Error_Handler(void);
 #define ACCEL_MESSAGE_ID                      (0x100)
 #define GYRO_MESSAGE_ID                       (0x101)
 #define GYRO_RATE_MESSAGE_ID                  (0x102)
+#define QUATERNION_MESSAGE_ID                 (0x103)
 
 #define ACC_DATA_X_LSB                        (0x08)
 #define ACC_DATA_X_MSB                        (0x09)
@@ -94,6 +95,8 @@ void Error_Handler(void);
 #define LIA_DATA_Y_MSB                        (0x2B)
 #define LIA_DATA_Z_LSB                        (0x2C)
 #define LIA_DATA_Z_MSB                        (0x2D)
+
+#define QUA_DATA_w_LSB                        (0x20)
 
 #define ACC_OFFSET_X_LSB                      (0x55)
 #define ACC_OFFSET_X_MSB                      (0x56)
