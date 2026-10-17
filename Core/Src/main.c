@@ -53,7 +53,7 @@ CAN_TxHeaderTypeDef AccelHeader = {
     .RTR = CAN_RTR_DATA,
     .DLC = 6
 };
-uint8_t AccelData[6] = {0};
+int16_t AccelData[3] = {0};
 
 CAN_TxHeaderTypeDef GyroHeader = {
     .StdId = GYRO_MESSAGE_ID,
@@ -61,7 +61,7 @@ CAN_TxHeaderTypeDef GyroHeader = {
     .RTR = CAN_RTR_DATA,
     .DLC = 6
 };
-uint8_t GyroData[6] = {0};
+int16_t GyroData[3] = {0};
 
 CAN_TxHeaderTypeDef GyroRateHeader = {
     .StdId = GYRO_RATE_MESSAGE_ID,
@@ -69,9 +69,7 @@ CAN_TxHeaderTypeDef GyroRateHeader = {
     .RTR = CAN_RTR_DATA,
     .DLC = 6
 };
-uint8_t GyroRateData[6] = {0};
-
-
+int16_t GyroRateData[3] = {0};
 
 uint32_t Mailbox;
 /* USER CODE END PV */
@@ -150,31 +148,16 @@ int main(void)
     MX_I2C1_Init();
   }
 
+  HAL_Delay(20); // Wait for mode change to take effect
+
   // Main Loop - read values
   while (1) {
     status = HAL_OK; // Reset status before reading data
 
-    // Read IMU data (store as BIG-ENDIAN)
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_LSB, 1, &AccelData[1], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_MSB, 1, &AccelData[0], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Y_LSB, 1, &AccelData[3], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Y_MSB, 1, &AccelData[2], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Z_LSB, 1, &AccelData[5], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_Z_MSB, 1, &AccelData[4], 1, I2C_TIMEOUT_MS);
-
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_LSB, 1, &GyroData[5], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_MSB, 1, &GyroData[4], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Roll_LSB, 1,    &GyroData[1], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Roll_MSB, 1,    &GyroData[0], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Pitch_LSB, 1,   &GyroData[3], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Pitch_MSB, 1,   &GyroData[2], 1, I2C_TIMEOUT_MS);
-
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB, 1, &GyroRateData[1], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_MSB, 1, &GyroRateData[0], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_LSB, 1, &GyroRateData[3], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Y_MSB, 1, &GyroRateData[2], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_LSB, 1, &GyroRateData[5], 1, I2C_TIMEOUT_MS);
-    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_Z_MSB, 1, &GyroRateData[4], 1, I2C_TIMEOUT_MS);
+    // Read IMU data (little endian)
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, LIA_DATA_X_LSB,  I2C_MEMADD_SIZE_8BIT, (uint8_t*)AccelData,    6, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, EUL_Heading_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)GyroData,     6, I2C_TIMEOUT_MS);
+    status |= HAL_I2C_Mem_Read(&hi2c1, BNO055_ADDR, GYR_DATA_X_LSB,  I2C_MEMADD_SIZE_8BIT, (uint8_t*)GyroRateData, 6, I2C_TIMEOUT_MS);
 
     // Attempt to recover from I2C errors by reinitializing the I2C peripheral
     if (status != HAL_OK) {
@@ -190,7 +173,7 @@ int main(void)
       HAL_CAN_AbortTxRequest(&hcan, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2); // Abort any pending transmissions to free up mailboxes
     }
 
-    // Transmit Can messages
+    // Transmit CAN messages
     HAL_CAN_AddTxMessage(&hcan, &AccelHeader, AccelData, &Mailbox);
     HAL_CAN_AddTxMessage(&hcan, &GyroHeader, GyroData, &Mailbox);
     HAL_CAN_AddTxMessage(&hcan, &GyroRateHeader, GyroRateData, &Mailbox);
@@ -261,13 +244,13 @@ static void MX_CAN_Init(void)
   hcan.Instance = CAN;
   hcan.Init.Prescaler = 1;
   hcan.Init.Mode = CAN_MODE_NORMAL;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan.Init.SyncJumpWidth = CAN_SJW_4TQ; // was CAN_SJW_1TQ
   hcan.Init.TimeSeg1 = CAN_BS1_10TQ;
   hcan.Init.TimeSeg2 = CAN_BS2_5TQ;
   hcan.Init.TimeTriggeredMode = DISABLE;
   hcan.Init.AutoBusOff = DISABLE;
   hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
+  hcan.Init.AutoRetransmission = ENABLE; // was DISABLE
   hcan.Init.ReceiveFifoLocked = DISABLE;
   hcan.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan) != HAL_OK)
@@ -296,7 +279,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x0010020A;
+  hi2c1.Init.Timing = 0x10420F13; //was 0x0010020A; // 
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
